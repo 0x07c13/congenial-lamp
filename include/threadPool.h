@@ -23,7 +23,6 @@ private:
 public: 
     explicit ThreadPool(size_t numThreads = 8); 
 
-    ThreadPool() = default; 
     ThreadPool(ThreadPool&&) = default; 
 
      ~ThreadPool();

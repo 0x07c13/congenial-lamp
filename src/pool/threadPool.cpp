@@ -2,7 +2,7 @@
 
 ThreadPool::ThreadPool(size_t numThreads) : _pool_ptr(std::make_shared<Pool>()) {
     // create numThreads threads
-    for (int i = 0; i < numThreads; ++i) {
+    for (size_t i = 0; i < numThreads; ++i) {
         _pool_ptr->_workers.emplace_back([pool_ptr = _pool_ptr] {
             // declare the locker. lock it manually later
             std::unique_lock<std::mutex> locker(pool_ptr->_mtx, std::defer_lock);
