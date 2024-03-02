@@ -1,7 +1,7 @@
 CXX = g++
 DEBUG = 1
 # CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g -I./include
-CXXFLAGS = -Wall -Wextra -std=c++11 -I./include
+CXXFLAGS = -Wall -Wextra -std=c++14 -I./include -DTEMPLATE_HEADERS_INCLUDE_SOURCES
 
 ifeq ($(DEBUG), 1) 
 	CXXFLAGS += -g
@@ -15,7 +15,10 @@ SRCDIR = src
 OBJDIR = build
 BINDIR = bin
 
-SOURCES := $(wildcard $(SRCDIR)/*.cpp) $(wildcard $(SRCDIR)/**/*.cpp)
+TMPL_SOURCES := $(SRCDIR)/pool/threadPool.cpp
+ALL_CXX_FILES := $(wildcard $(SRCDIR)/*.cpp) $(wildcard $(SRCDIR)/**/*.cpp)
+# I don't like template sources being included in the sources
+SOURCES := $(filter-out $(TMPL_SOURCES), $(ALL_CXX_FILES))
 OBJECTS := $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SOURCES)) 
 EXECUTABLE := $(BINDIR)/congenial-lamp
 
