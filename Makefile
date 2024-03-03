@@ -15,7 +15,7 @@ SRCDIR = src
 OBJDIR = build
 BINDIR = bin
 
-TMPL_SOURCES := $(SRCDIR)/pool/threadPool.cpp
+TMPL_SOURCES := $(SRCDIR)/pool/thread_pool.cpp
 ALL_CXX_FILES := $(wildcard $(SRCDIR)/*.cpp) $(wildcard $(SRCDIR)/**/*.cpp)
 # I don't like template sources being included in the sources
 SOURCES := $(filter-out $(TMPL_SOURCES), $(ALL_CXX_FILES))

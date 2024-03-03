@@ -1,4 +1,4 @@
-#include "threadPool.h"
+#include "thread_pool.h"
 
 ThreadPool::ThreadPool(size_t numThreads) : _pool_ptr(std::make_shared<Pool>()) {
     // create numThreads threads
@@ -45,14 +45,16 @@ ThreadPool::~ThreadPool() {
     }
 }
 
+// enqueue will return a future type so I can get the return value of the function in the future
 template<class F, class... Args>
 auto ThreadPool::enqueue(F&& f, Args&&... args) -> std::future<typename std::result_of<F(Args...)>::type> {
     using return_type = typename std::result_of<F(Args...)>::type;
-    auto task = std::make_shared<std::packaged_task<return_type()>>(std::bind(std::forward<F>(f), std::forward<Args>(args)...));
+    auto task = std::make_shared<std::packaged_task<return_type()> >(std::bind(std::forward<F>(f), std::forward<Args>(args)...));
     std::future<return_type> result = task->get_future();
     {
         std::unique_lock<std::mutex> lock(_pool_ptr->_mtx);
         if (_pool_ptr->stop) throw std::runtime_error("enqueue on stopped ThreadPool");
+        // create a new void() lambda to emplace to the _tasks queue
         _pool_ptr->_tasks.emplace([task]() { (*task)(); });
     }
     _pool_ptr->_cond_work.notify_one();

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <queue>
+#include <vector>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
@@ -28,10 +29,11 @@ public:
      ~ThreadPool();
 
     // enqueue tasks to the thread pool
+    // enqueue will return a future type so I can get the return value of the function in the future
     template<class F, class... Args>
     auto enqueue(F&& f, Args&&... args) -> std::future<typename std::result_of<F(Args...)>::type>;
 };
 
 #ifdef TEMPLATE_HEADERS_INCLUDE_SOURCES
-#include "../src/pool/threadPool.cpp"
+#include "../src/pool/thread_pool.cpp"
 #endif

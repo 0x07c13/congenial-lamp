@@ -1,16 +1,17 @@
-#include "threadPool.h"
+#include "thread_pool.h"
 #include <iostream>
 
-int main() {
-    ThreadPool* pool = new ThreadPool();
+int fn(int i) {
+    return i * i;
+}
 
-    std::vector<std::future<int>> results;
+int main() {
+    ThreadPool* pool = new ThreadPool(10);
+
+    std::vector<std::future<int> > results;
 
     for (int i = 0; i < 10; ++i) {
-        results.emplace_back(pool->enqueue([i] {
-            std::cout << "Task " << i << " executed by thread " << std::this_thread::get_id() << std::endl;
-            return i * i;
-        }));
+        results.emplace_back(pool->enqueue(fn, i));
     }
 
     delete pool;
