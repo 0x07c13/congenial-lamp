@@ -12,14 +12,14 @@ class ThreadPool {
 private: 
     // maintain a storage struct here 
     struct Pool {
-        std::mutex _mtx;
-        std::condition_variable _cond_work; // condition that I got work to do
+        std::mutex mtx_;
+        std::condition_variable cond_work_; // condition that I got work to do
         bool stop = false;
-        std::vector<std::thread> _workers; // worker threads
-        std::queue<std::function<void ()> > _tasks; // tasks queue
+        std::vector<std::thread> workers_; // worker threads
+        std::queue<std::function<void ()> > tasks_; // tasks queue
     };
 
-    std::shared_ptr<Pool> _pool_ptr; // outlet to manipulate the storage
+    std::shared_ptr<Pool> pool_ptr_; // outlet to manipulate the storage
 
 public: 
     explicit ThreadPool(size_t numThreads = 8); 

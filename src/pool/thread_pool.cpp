@@ -1,18 +1,18 @@
 #include "thread_pool.h"
 
-ThreadPool::ThreadPool(size_t numThreads) : _pool_ptr(std::make_shared<Pool>()) {
+ThreadPool::ThreadPool(size_t numThreads) : pool_ptr_(std::make_shared<Pool>()) {
     // create numThreads threads
     for (size_t i = 0; i < numThreads; ++i) {
-        _pool_ptr->_workers.emplace_back([pool_ptr = _pool_ptr] {
+        pool_ptr_->workers_.emplace_back([pool_ptr = pool_ptr_] {
             // declare the locker. lock it manually later
-            std::unique_lock<std::mutex> locker(pool_ptr->_mtx, std::defer_lock);
+            std::unique_lock<std::mutex> locker(pool_ptr->mtx_, std::defer_lock);
             
             while (true) {
                 locker.lock();
                 /* critical section */
-                if (!pool_ptr->_tasks.empty()) { // if I got tasks
-                    auto task = std::move(pool_ptr->_tasks.front());
-                    pool_ptr->_tasks.pop();
+                if (!pool_ptr->tasks_.empty()) { // if I got tasks
+                    auto task = std::move(pool_ptr->tasks_.front());
+                    pool_ptr->tasks_.pop();
                     locker.unlock();
                     task();
                 }
@@ -24,7 +24,7 @@ ThreadPool::ThreadPool(size_t numThreads) : _pool_ptr(std::make_shared<Pool>()) 
                 // there are no jobs to do, wait for jobs, and release the lock, 
                 // so that other workers can do their jobs
                 else {
-                    pool_ptr->_cond_work.wait(locker);
+                    pool_ptr->cond_work_.wait(locker);
                     // don't forget to unlock the locker after being awakened 
                     locker.unlock();
                 }
@@ -35,12 +35,12 @@ ThreadPool::ThreadPool(size_t numThreads) : _pool_ptr(std::make_shared<Pool>()) 
 
 ThreadPool::~ThreadPool() {
     { // critical section
-        std::unique_lock<std::mutex> locker(_pool_ptr->_mtx);
-        _pool_ptr->stop = true;
+        std::unique_lock<std::mutex> locker(pool_ptr_->mtx_);
+        pool_ptr_->stop = true;
     }
     
     // get the resources released
-    for (std::thread& worker : _pool_ptr->_workers) {
+    for (std::thread& worker : pool_ptr_->workers_) {
         worker.join();
     }
 }
@@ -52,11 +52,11 @@ auto ThreadPool::enqueue(F&& f, Args&&... args) -> std::future<typename std::res
     auto task = std::make_shared<std::packaged_task<return_type()> >(std::bind(std::forward<F>(f), std::forward<Args>(args)...));
     std::future<return_type> result = task->get_future();
     {
-        std::unique_lock<std::mutex> lock(_pool_ptr->_mtx);
-        if (_pool_ptr->stop) throw std::runtime_error("enqueue on stopped ThreadPool");
+        std::unique_lock<std::mutex> lock(pool_ptr_->mtx_);
+        if (pool_ptr_->stop) throw std::runtime_error("enqueue on stopped ThreadPool");
         // create a new void() lambda to emplace to the _tasks queue
-        _pool_ptr->_tasks.emplace([task]() { (*task)(); });
+        pool_ptr_->tasks_.emplace([task]() { (*task)(); });
     }
-    _pool_ptr->_cond_work.notify_one();
+    pool_ptr_->cond_work_.notify_one();
     return result;
 }
