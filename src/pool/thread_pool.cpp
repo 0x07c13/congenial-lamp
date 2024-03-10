@@ -57,6 +57,6 @@ auto ThreadPool::enqueue(F&& f, Args&&... args) -> std::future<typename std::res
         // create a new void() lambda to emplace to the _tasks queue
         pool_ptr_->tasks_.emplace([task]() { (*task)(); });
     }
-    pool_ptr_->cond_work_.notify_one();
+    pool_ptr_->cond_work_.notify_all();
     return result;
 }
